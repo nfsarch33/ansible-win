@@ -40,6 +40,7 @@ choco upgrade chocolatey
 # Basic
 choco install 7zip.install -y
 choco install 7zip.commandline -y
+choco install 7zip.portable -y
 choco install git -y
 choco install github -y
 choco install dotnet4.0 -y
@@ -49,6 +50,16 @@ choco install open-shell -y
 choco install conemu -y
 choco install mingw -y
 choco install cygwin -y
+choco install curl -y
+choco install ffmpeg -y
+choco install graphviz -y
+choco install grep -y
+choco install make -y
+choco install putty.portable -y
+choco install rm-glob -y
+choco install rust -y
+choco install which -y
+choco install zip -y
 
 # Browsers
 choco install chrome -y
@@ -63,19 +74,25 @@ choco install dotnet5-desktop-runtime -y
 choco install dotnet-5.0-runtime -y
 choco install dotnet-6.0-runtime -y
 choco install dotnet-7.0-runtime -y
-choco install dotnetfx -y
+choco install dotnet-8.0-sdk -y
+choco install dotnet-9.0-sdk -y
+choco install dotnetcore-3.1-sdk -y
 choco install dotnet-sdk -y
 choco install dotnetcore-sdk -y
 choco install VCredist-All -y
 choco install JavaRuntime -y
-choco install cygwin -y
+choco install jdk8 -y
+choco install jre8 -y
 choco install oraclejdk -y
 choco install python3 -y
+choco install python311 -y
+choco install python312 -y
+choco install python313 -y
 choco install miniconda3 -y
-choco install pip -y
 choco install anaconda3 -y
 choco install nodejs -y
 choco install golang -y
+choco install golangci-lint -y
 choco install postman -y
 
 # IDEs
@@ -84,7 +101,7 @@ choco install goland -y
 choco install intellijidea-ultimate -y
 choco install androidstudio -y
 choco install android-sdk -y
-choco install dart-sdk
+choco install dart-sdk -y
 choco install flutter -y
 choco install r.studio -y
 
@@ -121,8 +138,8 @@ choco install expressvpn -y
 choco install virtualbox -y
 choco install xyplorer -y
 choco install internet-download-manager -y
+choco install autohotkey.portable -y
+choco install opencv -y
 
 # Office Tools
 choco install office365homepremium -y
-
-Write-Output "Completing setup......"
