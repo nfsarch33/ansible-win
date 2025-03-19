@@ -43,7 +43,6 @@ choco install 7zip.commandline -y
 choco install 7zip.portable -y
 choco install git -y
 choco install github -y
-choco install dotnet4.0 -y
 choco install vscode -y
 choco install msiafterburner -y
 choco install open-shell -y
@@ -66,28 +65,30 @@ choco install chrome -y
 choco install firefox -y
 
 # Runtime and SDK
-choco install dotnet3.5 -y
-choco install dotnet4.5 -y
-choco install dotnet4.7.2 -y
-choco install dotnetfx -y
-choco install dotnet5-desktop-runtime -y
-choco install dotnet-5.0-runtime -y
-choco install dotnet-6.0-runtime -y
-choco install dotnet-7.0-runtime -y
+## .NET
+choco install dotnet-9.0-sdk -y  # Latest .NET SDK
 choco install dotnet-8.0-sdk -y
-choco install dotnet-9.0-sdk -y
-choco install dotnetcore-3.1-sdk -y
-choco install dotnet-sdk -y
-choco install dotnetcore-sdk -y
-choco install VCredist-All -y
-choco install JavaRuntime -y
-choco install jdk8 -y
+choco install dotnet-7.0-runtime -y
+choco install dotnet-6.0-runtime -y
+choco install dotnet-5.0-runtime -y
+choco install dotnet5-desktop-runtime -y
+choco install dotnetfx -y  # .NET Framework
+choco install dotnet4.7.2 -y
+choco install dotnet4.5 -y
+choco install dotnet4.0 -y
+choco install dotnet3.5 -y
+
+## Java
+choco install jdk8 -y  # Java 8
 choco install jre8 -y
-choco install oraclejdk -y
-choco install python3 -y
-choco install python311 -y
-choco install python312 -y
+choco install oraclejdk -y  # Latest Oracle JDK (Java 24 as of March 2025)
+
+## Other runtimes
+choco install VCredist-All -y
+choco install python3 -y  # Latest Python 3
 choco install python313 -y
+choco install python312 -y
+choco install python311 -y
 choco install miniconda3 -y
 choco install anaconda3 -y
 choco install nodejs -y
@@ -116,7 +117,6 @@ choco install slack -y
 
 # Audio and Video
 choco install vlc -y
-# choco install spotify -y
 choco install obs-studio -y
 choco install audacity -y
 
@@ -143,3 +143,5 @@ choco install opencv -y
 
 # Office Tools
 choco install office365homepremium -y
+
+Write-Output "Completing setup......"
