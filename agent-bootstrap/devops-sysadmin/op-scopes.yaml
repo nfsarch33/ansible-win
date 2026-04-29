@@ -1,0 +1,113 @@
+# 1Password service-account read-only scopes for devops-sysadmin skill.
+# ADR-015: distribution + governance. Write operations live in other service
+# accounts with their own scopes file. Any path not listed below is implicitly
+# denied and the caller must escalate via Telegram mission-control.
+#
+# Shape: list of { vault, item, field } triples. Glob is permitted on field
+# only (e.g. "credential*").
+
+version: 1
+mode: read_only
+
+reads:
+  # Cloud LLMs (Tier 1 router)
+  - vault: Cursor_IronClaw
+    item: MiniMax M2.7 highspeed API 1
+    field: credential
+  - vault: Cursor_IronClaw
+    item: MiniMax M2.7 highspeed API 1
+    field: base_url
+  - vault: Cursor_IronClaw
+    item: MiniMax M2.7 highspeed API 2
+    field: credential
+  - vault: Cursor_IronClaw
+    item: MiniMax M2.7 highspeed API 2
+    field: base_url
+
+  # Email providers (free-tier rotation; used by InstrumentedRetrier Sprint 3)
+  - vault: Cursor_IronClaw
+    item: SMTP2GO API 1
+    field: credential
+  - vault: Cursor_IronClaw
+    item: SMTP2GO API 2
+    field: credential
+  - vault: Cursor_IronClaw
+    item: Resend API 1
+    field: credential
+  - vault: Cursor_IronClaw
+    item: Resend API 2
+    field: credential
+  - vault: Cursor_IronClaw
+    item: Brevo API 1
+    field: credential
+  - vault: Cursor_IronClaw
+    item: Brevo API 2
+    field: credential
+
+  # Telegram (mission-control + emergency fallback)
+  - vault: Cursor_IronClaw
+    item: Telegram mc_sysadmin_bot
+    field: token
+  - vault: Cursor_IronClaw
+    item: Telegram mc_sysadmin_bot
+    field: a2a_hmac        # HMAC-SHA256 secret shared with the mission-control IronClaw A2A gateway
+  - vault: Cursor_IronClaw
+    item: Telegram win1_sysadmin_fallback_bot
+    field: token
+  - vault: Cursor_IronClaw
+    item: Telegram win2_sysadmin_fallback_bot
+    field: token
+  - vault: Cursor_IronClaw
+    item: Telegram players_aerq61a_sysadmin_fallback_bot
+    field: token
+  - vault: Cursor_IronClaw
+    item: Telegram Allowlist
+    field: jaslian_user_id
+
+  # Mem0 + global-kb write keys (KB writer uses git ssh; mem0 uses api key)
+  - vault: Cursor_IronClaw
+    item: Mem0 API
+    field: credential
+  - vault: Cursor_IronClaw
+    item: Mem0 API
+    field: org_id
+  - vault: Cursor_IronClaw
+    item: Mem0 API
+    field: project_id
+
+  # Oracle jump host (ssh key reference for proxy connect only; the key lives
+  # on disk and is not pulled through op).
+  - vault: Cursor_IronClaw
+    item: Oracle Jump Host
+    field: hostname
+  - vault: Cursor_IronClaw
+    item: Oracle Jump Host
+    field: username
+
+  # Tailscale node auth keys: one per Windows host. Plan L165 requires these.
+  - vault: Cursor_IronClaw
+    item: Tailscale Auth Key win1
+    field: credential
+  - vault: Cursor_IronClaw
+    item: Tailscale Auth Key win2
+    field: credential
+  - vault: Cursor_IronClaw
+    item: Tailscale Auth Key players-aerq61a
+    field: credential
+
+  # Anthropic proxy (optional overflow tier; see LLM tier routing ADR Sprint 1 Day 3).
+  - vault: Cursor_IronClaw
+    item: Anthropic Proxy
+    field: credential
+    optional: true
+
+# Scopes explicitly not granted to this skill.
+denied_writes:
+  - reason: "All writes happen under different service accounts per ADR-015"
+
+# Rotation cadence reminders (informational; enforced by routines).
+rotation:
+  telegram_fallback_token_hours: 24
+  minimax_credential_days: 90
+  email_provider_key_days: 30
+  tailscale_node_auth_key_days: 90

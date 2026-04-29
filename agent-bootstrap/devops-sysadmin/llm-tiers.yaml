@@ -1,0 +1,183 @@
+# Fleet-wide DevOps/SysAdmin LLM routing tiers.
+#
+# This file is ADDITIVE to the llm-cluster-router config (reuses existing
+# routing engine; do not duplicate). It tells IronClaw / mission-control /
+# automation which tier to prefer for which kind of work, plus the resource
+# guardrails that must be green BEFORE a request lands on each tier.
+#
+# Consumers:
+#   - go/internal/fleet/llmfw/tiers_file.go (typed loader + validator)
+#   - llm-cluster-router nodes.yaml (upstream URLs / health checks)
+#   - skills/devops-sysadmin/telemetry/prom-rules.yml (alert expressions)
+#
+# ADR: docs/adr/adr-015-devops-sysadmin-skill.md (Sprint 1 Day 3 name-drift
+# record; tier numbering and MiniMax-M2.7-highspeed rollout).
+#
+# Mode: read-by-router, written only by humans via PR; never rewritten by the
+# agent at runtime. Handoff notes may reference the tier_id values below.
+
+version: 1
+mode: declarative
+
+# Model alias table keeps v249 evidence + Grafana queries + Mem0 tags joinable
+# across the MiniMax-M2 -> MiniMax-M2.7-highspeed rename. Grep `alias` when
+# dashboard queries break after a rename.
+model_aliases:
+  MiniMax-M2.7-highspeed:
+    - MiniMax-M2
+    - minimax-01
+    - minimax-abab7-chat
+  qwen3-32b-awq:
+    - qwen3.5-27b
+    - Qwen/Qwen3-32B-AWQ
+  qwen3-4070ti-super:
+    - qwen3.5-9b
+    - qwen3.5-35b-a3b
+
+# Router tier definitions, priority-ordered (low = try first).
+#
+# CostPer1K: USD per 1k tokens, informational; CostGuard in the Prom rules is
+# the runtime guardrail.
+# MaxTokens: per-request ceiling the router will enforce.
+# Guardrails: MUST all be satisfied before this tier is offered; they map 1:1
+# to metric names scraped in telemetry/prom-rules.yml.
+tiers:
+  - id: T1
+    name: MiniMax-M2.7-highspeed
+    tier_kind: cloud
+    priority: 1
+    model: MiniMax-M2.7-highspeed
+    endpoint_env: MINIMAX_BASE_URL
+    credential_ref: "op://Cursor_IronClaw/MiniMax M2.7 highspeed API 1/credential"
+    cost_per_1k: 0.30
+    max_tokens: 8192
+    use_cases:
+      - planning
+      - summarisation
+      - short structured outputs
+      - telegram mission-control replies
+    guardrails:
+      costguard_daily_usd_max: 5.0
+      router_tier_p95_seconds_max: 8
+      minimax_429_rate_5m_max: 0.02
+
+  - id: T2
+    name: win1-vllm-3090x2-tp2
+    tier_kind: local_vllm
+    priority: 2
+    model: qwen3-32b-awq
+    endpoint: http://win1.tailnet:8001
+    credential_ref: null
+    cost_per_1k: 0.0
+    max_tokens: 32768
+    node: win1
+    gpu_topology:
+      primary:
+        - name: nvidia-rtx-3090-0
+          tp_role: tp0
+        - name: nvidia-rtx-3090-1
+          tp_role: tp1
+      small_router:
+        - name: nvidia-rtx-2070
+          role: cache_embedding_only
+    use_cases:
+      - long context reasoning
+      - code drafting
+      - ansible report summarisation
+    guardrails:
+      gpu_vram_used_ratio_max: 0.85
+      gpu_temperature_celsius_max: 82
+      physical_memory_used_ratio_max: 0.80
+      free_disk_ratio_min: 0.10
+      router_tier_p95_seconds_max: 30
+
+  - id: T3
+    name: win2-vllm-4070tis
+    tier_kind: local_vllm
+    priority: 3
+    model: qwen3-4070ti-super
+    endpoint: http://win2.tailnet:8001
+    credential_ref: null
+    cost_per_1k: 0.0
+    max_tokens: 16384
+    node: win2
+    gpu_topology:
+      primary:
+        - name: nvidia-rtx-4070-ti-super
+          tp_role: solo
+    use_cases:
+      - fallback when T2 saturated
+      - fast chat turns
+      - drift-report summarisation
+    guardrails:
+      gpu_vram_used_ratio_max: 0.85
+      gpu_temperature_celsius_max: 82
+      physical_memory_used_ratio_max: 0.80
+      free_disk_ratio_min: 0.10
+      router_tier_p95_seconds_max: 30
+
+  - id: T4
+    name: wsl-llama-cpu
+    tier_kind: local_cpu
+    priority: 4
+    model: llama-3.2-8b-instruct-q4_k_m
+    endpoint: http://127.0.0.1:8080
+    credential_ref: null
+    cost_per_1k: 0.0
+    max_tokens: 4096
+    node: wsl1
+    use_cases:
+      - last-ditch offline
+      - cheap summary of cycle
+      - emergency fallback when GPUs unhealthy
+    guardrails:
+      free_disk_ratio_min: 0.05
+      physical_memory_used_ratio_max: 0.90
+
+  - id: T5
+    name: anthropic-overflow
+    tier_kind: cloud
+    priority: 5
+    model: claude-sonnet-4-20250514
+    endpoint_env: ANTHROPIC_BASE_URL
+    credential_ref: "op://Cursor_IronClaw/Anthropic Proxy/credential"
+    optional: true
+    cost_per_1k: 3.0
+    max_tokens: 8192
+    use_cases:
+      - escalation when MiniMax refuses
+      - long-form plan review
+    guardrails:
+      costguard_daily_usd_max: 2.0
+      router_tier_p95_seconds_max: 15
+
+# Work-type hints: routers and routines can use these to pick a starting tier.
+# If empty, caller falls back to priority-ordered scan.
+workload_hints:
+  planning: [T1, T2, T5]
+  summarisation: [T1, T3, T4]
+  coding: [T2, T3, T1]
+  reasoning: [T2, T5, T1]
+  chat: [T1, T3, T2]
+  drift_report: [T3, T2, T4]
+  emergency: [T4, T3, T2]
+
+# Metric names this file relies on; keep in sync with prom-rules.yml so a
+# misspelling here fails the loader, not production.
+declared_metrics:
+  - devops_sysadmin:gpu_vram_used_ratio
+  - nvidia_gpu_temperature_celsius
+  - windows_physical_memory_used_bytes
+  - windows_physical_memory_total_bytes
+  - node_filesystem_avail_bytes
+  - node_filesystem_size_bytes
+  - devops_sysadmin:router_tier_p95_5m
+  - devops_sysadmin_costguard_daily_spend_usd
+  - fleet_llm_failover_total
+
+# Notes: cross-references (kept short so the file reads cleanly).
+notes:
+  - "Plan L186-L209: Tier 1 MiniMax highspeed + Tier 2/3 local vLLM."
+  - "ADR-015 Section 7: MiniMax-M2 -> MiniMax-M2.7-highspeed name-drift."
+  - "Guardrails evaluated against metrics declared above; missing = fail-closed."
+  - "New tiers must add to `model_aliases` so logs/dashboards stay joinable."

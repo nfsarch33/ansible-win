@@ -1,32 +1,31 @@
-# IDE and Editor Files
+# Local/runtime output
+logs/
+debug.log
+npm-debug.log*
+*.log
+log.txt
+.env
+.env.*
+!.env.example
+
+# IDE / OS noise
 .idea/
 .history/
 *.swp
 *.swo
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Build and Binary Directories
+# Build / package output
 build/
 install/
 bin/
 obj/
+node_modules/
+vendor/
 
-# Logs and Debug Files
-logs/
-*.log
-log.txt
-npm-debug.log*
-debug.log
-*.txt
-
-# Security and Credentials
-.ssh/
-.env
-pubkeys/*.ps1
-*.pem
-*.key
-*.crt
-
-# Backup and Temporary Files
+# Temporary files
 backup/
 temp/
 tmp/
@@ -34,11 +33,17 @@ tmp/
 *.tmp
 *~
 
-# OS-specific Files
-.DS_Store
-Thumbs.db
-desktop.ini
+# Python/Ansible caches
+__pycache__/
+*.pyc
+.ansible/
+collections/ansible_collections/**/.cache/
 
-# Package Dependencies
-node_modules/
-vendor/
+# Secrets / local key material
+.ssh/
+pubkeys/*.ps1
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
