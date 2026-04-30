@@ -1,0 +1,72 @@
+---
+- name: Install cursor-tools Mem0 outbox on WSL fleet nodes
+  hosts: wsl_fleet
+  gather_facts: false
+  vars:
+    cursor_tools_bin: "{{ ansible_env.HOME }}/bin/cursor-tools"
+    outbox_dir: "{{ ansible_env.HOME }}/.cursor/mem0-outbox"
+    outbox_queue: "{{ outbox_dir }}/queue.ndjson"
+    outbox_cursor: "{{ outbox_dir }}/queue.cursor"
+    user_systemd_dir: "{{ ansible_env.HOME }}/.config/systemd/user"
+  tasks:
+    - name: Ensure cursor-tools binary exists
+      ansible.builtin.stat:
+        path: "{{ cursor_tools_bin }}"
+      register: cursor_tools_stat
+
+    - name: Fail when cursor-tools is missing
+      ansible.builtin.fail:
+        msg: "cursor-tools must be installed before enabling mem0 outbox"
+      when: not cursor_tools_stat.stat.exists
+
+    - name: Ensure Mem0 outbox directory exists
+      ansible.builtin.file:
+        path: "{{ outbox_dir }}"
+        state: directory
+        mode: "0700"
+
+    - name: Ensure queue file exists
+      ansible.builtin.file:
+        path: "{{ outbox_queue }}"
+        state: touch
+        mode: "0600"
+
+    - name: Ensure cursor file exists
+      ansible.builtin.copy:
+        dest: "{{ outbox_cursor }}"
+        content: "0\n"
+        force: false
+        mode: "0600"
+
+    - name: Ensure user systemd directory exists
+      ansible.builtin.file:
+        path: "{{ user_systemd_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Install Mem0 outbox user service
+      ansible.builtin.copy:
+        dest: "{{ user_systemd_dir }}/cursor-mem0-outbox.service"
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Cursor Mem0 outbox flush daemon
+          After=network-online.target
+
+          [Service]
+          Type=simple
+          ExecStart={{ cursor_tools_bin }} mem0-outbox flush --batch-size 25 --interval 30s
+          Restart=always
+          RestartSec=15
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Reload user systemd
+      ansible.builtin.command: systemctl --user daemon-reload
+      changed_when: false
+
+    - name: Enable Mem0 outbox service
+      ansible.builtin.command: systemctl --user enable cursor-mem0-outbox.service
+      changed_when: "'Created symlink' in mem0_outbox_enable.stdout"
+      register: mem0_outbox_enable

@@ -1,0 +1,25 @@
+[constraints]
+max_cycles = 0
+max_coupling = "B"
+max_cc = 60
+no_god_files = true
+
+[[layers]]
+name = "playbooks"
+paths = ["ansible/playbooks/*", "ansible/roles/*"]
+order = 2
+
+[[layers]]
+name = "agent_bootstrap"
+paths = ["agent-bootstrap/*"]
+order = 1
+
+[[layers]]
+name = "legacy_scripts"
+paths = ["*.ps1"]
+order = 0
+
+[[boundaries]]
+from = "agent-bootstrap/*"
+to = "*.ps1"
+reason = "Agent bootstrap should not grow dependencies on legacy workstation scripts."
