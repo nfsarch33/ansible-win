@@ -23,6 +23,9 @@ class PlaybookTests(unittest.TestCase):
         self.assertIn("ansible-win DevOps/SysAdmin bundle", text)
         self.assertIn("legacy DevOps/SysAdmin bundle", text)
         self.assertIn("windows-mcp-config.json", text)
+        self.assertIn("CURRENT_WINDOWS_FACTS", text)
+        self.assertIn("LEGACY_WINDOWS_FACTS", text)
+        self.assertIn("windows_fact_mismatches", text)
 
 
 if __name__ == "__main__":
