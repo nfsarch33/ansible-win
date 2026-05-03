@@ -5,6 +5,8 @@
   vars:
     ansible_win_bundle: "{{ playbook_dir }}/../../agent-bootstrap/devops-sysadmin"
     legacy_bundle: "{{ lookup('env', 'LEGACY_DEVOPS_SYSADMIN_BUNDLE') | default('', true) }}"
+    current_windows_facts: "{{ lookup('env', 'CURRENT_WINDOWS_FACTS') | default('', true) }}"
+    legacy_windows_facts: "{{ lookup('env', 'LEGACY_WINDOWS_FACTS') | default('', true) }}"
   tasks:
     - name: Ensure ansible-win bundle exists
       ansible.builtin.stat:
@@ -57,4 +59,33 @@
         CURRENT: "{{ ansible_win_bundle }}"
         LEGACY: "{{ legacy_bundle }}"
       when: legacy_bundle != ""
+      changed_when: false
+
+    - name: Compare Windows fact snapshots when provided
+      ansible.builtin.command:
+        argv:
+          - python3
+          - -c
+          - |
+            import json
+            import os
+            import sys
+            from pathlib import Path
+
+            current = json.loads(Path(os.environ["CURRENT_WINDOWS_FACTS"]).read_text(encoding="utf-8"))
+            legacy = json.loads(Path(os.environ["LEGACY_WINDOWS_FACTS"]).read_text(encoding="utf-8"))
+            keys = ["hostname", "os_family", "windows_mcp_version", "wsl_distro", "tailscale_status"]
+            windows_fact_mismatches = [
+                f"{key}: current={current.get(key)!r} legacy={legacy.get(key)!r}"
+                for key in keys
+                if current.get(key) != legacy.get(key)
+            ]
+            if windows_fact_mismatches:
+                print("\n".join(windows_fact_mismatches))
+                sys.exit(1)
+        chdir: "{{ ansible_win_bundle }}"
+      environment:
+        CURRENT_WINDOWS_FACTS: "{{ current_windows_facts }}"
+        LEGACY_WINDOWS_FACTS: "{{ legacy_windows_facts }}"
+      when: current_windows_facts != "" and legacy_windows_facts != ""
       changed_when: false
