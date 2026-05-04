@@ -112,17 +112,22 @@ fi
 if command -v op >/dev/null 2>&1; then
     if op whoami >/dev/null 2>&1; then
         log "op whoami OK"
-        cred_len=0
-        if cred="$(op read 'op://Cursor_IronClaw/MiniMax M2.7 highspeed API 1/credential' 2>/dev/null)"; then
-            cred_len=${#cred}
-            sha_prefix="$(printf '%s' "$cred" | sha256sum | awk '{print substr($1,1,12)}')"
-            log "minimax credential: length=${cred_len} sha256_prefix=${sha_prefix}"
-            mkdir -p "${CANON_DIR}/telemetry"
-            printf 'length=%s sha256_prefix=%s\n' "$cred_len" "$sha_prefix" \
-                >"${CANON_DIR}/telemetry/minimax-credential.fingerprint"
-            unset cred
+        runx_bin="${RUNX_BIN:-${HOME}/runs/runx}"
+        if [[ ! -x "$runx_bin" ]]; then
+            log "minimax credential fingerprint skipped (runx not installed at ${runx_bin})"
         else
-            log "minimax credential read skipped (item missing or op not signed in)"
+            mkdir -p "${CANON_DIR}/telemetry"
+            fingerprint_path="${CANON_DIR}/telemetry/minimax-credential.fingerprint"
+            if op read 'op://Cursor_IronClaw/MiniMax M2.7 highspeed API 1/credential' 2>/dev/null \
+                | "$runx_bin" fingerprint --out "$fingerprint_path"; then
+                if [[ -s "$fingerprint_path" ]]; then
+                    log "minimax credential fingerprint: $(cat "$fingerprint_path")"
+                else
+                    log "minimax credential read skipped (op returned empty value)"
+                fi
+            else
+                log "minimax credential read skipped (item missing or op not signed in)"
+            fi
         fi
     else
         log "op whoami not signed in; set OP_SERVICE_ACCOUNT_TOKEN to enable"
