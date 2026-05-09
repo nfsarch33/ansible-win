@@ -1,9 +1,6 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: check test
-check:
-	@pwsh -NoProfile -File ./agent-bootstrap/devops-sysadmin/scripts/check-windows-mcp-version.ps1 -ExpectedVersion 0.7.1 -NoInstall || true
-
+.PHONY: test
 test:
 	python3 -m unittest discover -s ansible/tests -p 'test_*.py'
 

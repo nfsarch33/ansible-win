@@ -1,19 +1,17 @@
 # ansible-win
 
-Private Windows 11 workstation bootstrap and fleet onboarding automation for the IronClaw/Cylrl home fleet.
+Generic Windows 11 workstation bootstrap and onboarding automation.
 
 ## Scope
 
 - Windows admin PowerShell bootstrap scripts.
 - OpenSSH, firewall, Chocolatey, UV, and Windows-MCP setup.
-- DevOps/SysAdmin IronClaw node onboarding bundle.
 - Ansible collections and future playbooks for day-2 drift management.
 
 ## Layout
 
-- `agent-bootstrap/devops-sysadmin/` — copied from `ai-agent-business-stack/skills/devops-sysadmin/`; compatibility copy remains in the source repo until consumers switch.
-- `ansible/` — Ansible collection scaffold copied from `ai-agent-business-stack/infra/ansible/`.
-- `docs/repo-boundaries.md` — ownership rules for this repo versus business stack and ops repos.
+- `ansible/` — Ansible collection scaffold for Windows day-2 drift management.
+- `docs/repo-boundaries.md` — ownership rules for this repo.
 - root `*.ps1` — legacy workstation bootstrap scripts retained from the original repo.
 
 ## Quick Start
@@ -25,16 +23,17 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\install-all.ps1
 ```
 
-For DevOps/SysAdmin IronClaw node onboarding:
-
-```powershell
-.\agent-bootstrap\devops-sysadmin\install.ps1 -Pull -Mode Node
-.\agent-bootstrap\devops-sysadmin\scripts\preflight.ps1
-```
-
 ## Boundary
 
-This repo is personal/private. Do not store real secrets here. 1Password service-account references and redacted examples are allowed; resolved tokens are not.
+Operator-specific DevOps/SysAdmin onboarding (the previous
+`agent-bootstrap/devops-sysadmin/` bundle) was relocated to a
+separate private operator repo in v323-5. This repo retains only
+the generic Windows bootstrap scripts and the Ansible scaffold.
+
+Do not commit real secrets, fleet hostnames, vault names, or
+operator-specific paths to this repository. Use generic
+placeholders (`<your-host>`, `<vault-name>`, `<your-path>`) in
+documentation and scripts.
 
 ---
 
