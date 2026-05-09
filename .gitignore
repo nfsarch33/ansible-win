@@ -47,4 +47,3 @@ pubkeys/*.ps1
 *.crt
 *.pfx
 *.p12
-agent-bootstrap/devops-sysadmin/telemetry/*.fingerprint
