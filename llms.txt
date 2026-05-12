@@ -1,0 +1,45 @@
+# ansible-win
+
+> Generic Windows 11 workstation bootstrap and onboarding automation.
+> PowerShell scripts for OpenSSH, firewall, Chocolatey, UV, and
+> Windows-MCP setup, plus an Ansible collection scaffold for day-2 drift
+> management.
+
+## Overview
+
+- Name: ansible-win
+- Purpose: Windows 11 workstation bootstrap (PowerShell admin scripts) and Ansible collection scaffold for day-2 configuration drift management.
+- Language(s): PowerShell, YAML (Ansible)
+- License: MIT
+- Authoritative README: <https://github.com/nfsarch33/ansible-win#readme>
+- Source of truth branch: `main`
+
+## Quick Start
+
+- Run PowerShell as Administrator on a Windows 11 target:
+  ```powershell
+  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+  .\install-all.ps1
+  ```
+- Minimum runtime prerequisites: Windows 11, PowerShell 5.1+
+
+## Key Concepts
+
+- `ansible/` — Ansible collection scaffold for Windows day-2 drift management
+- `docs/repo-boundaries.md` — ownership rules for this repo
+- Root `*.ps1` — legacy workstation bootstrap scripts (OpenSSH, firewall, Chocolatey, UV, Windows-MCP)
+- Boundary: generic bootstrap only; operator-specific DevOps/SysAdmin scripts live elsewhere
+
+## Runnable Examples
+
+- Full bootstrap: `.\install-all.ps1` (as Administrator)
+
+## Operational Notes
+
+- Issue tracker: <https://github.com/nfsarch33/ansible-win/issues>
+- Do not commit real secrets, fleet hostnames, vault names, or operator-specific paths; use generic placeholders
+
+---
+
+*This file follows the emerging `llms.txt` convention adopted by cloudwego/eino,
+Anthropic tooling, and others.*
